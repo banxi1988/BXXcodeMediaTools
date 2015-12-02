@@ -12,6 +12,17 @@ except ImportError:
 __author__ = 'banxi'
 
 
+def _json_from_path(path):
+    with codecs.open(path, mode='r', encoding='utf-8') as f:
+        return json.loads(f.read())
+
+
+def _json_to_path(jsonobj, path):
+    json_str = json.dumps(jsonobj, indent='  ')
+    with codecs.open(path, mode='w', encoding='utf-8') as f:
+        f.write(json_str)
+
+
 class ContentsJson(object):
     def __init__(self, path):
         with codecs.open(path, mode='r', encoding='utf-8') as f:
@@ -107,7 +118,12 @@ def _walk_g2x_root(root_path):
                 _g2x(path, imageset_name)
 
 
-@click.command()
+@click.group()
+def xmt():
+    pass
+
+
+@xmt.command()
 @click.argument('path', type=click.Path(exists=True, file_okay=True, dir_okay=True))
 def g2x(path):
     if os.path.isfile(path):
@@ -117,10 +133,41 @@ def g2x(path):
         _walk_g2x_root(path)
 
 
+@xmt.command()
+@click.argument('path', type=click.Path(exists=True, file_okay=True, dir_okay=False, writable=True))
+def mkappicon(path):
+    contentsPath = os.path.join(os.path.dirname(__file__), "AppIconContents.json")
+    contents = _json_from_path(contentsPath)
+
+    def make_pixel_size(point_size, scale):
+        w, h = point_size.split('x')
+        scale_value = int(scale[0])
+        return "%dx%d" % (int(w) * scale_value, int(h) * scale_value)
+
+    folder = "AppIcon.appiconset"
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    for image in contents["images"]:
+        point_size = image["size"]
+        scale = image["scale"]
+        pixel_size = make_pixel_size(point_size, scale)
+        convert_args = [
+            'convert',
+            path,
+            '-resize',
+            pixel_size,
+            os.path.join(folder, image["filename"]),
+        ]
+        subprocess.check_call(convert_args)
+
+    contents_json_path = os.path.join(folder, 'Contents.json')
+    _json_to_path(contents, contents_json_path)
+
+
 def main():
-    g2x()
+    xmt()
 
 
 if __name__ == '__main__':
     main()
-    # _walk_g2x_root('build/Media.xcassets')
