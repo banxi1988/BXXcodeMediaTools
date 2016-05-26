@@ -93,6 +93,9 @@ def _g2x(path, imageset_name=None):
 
 def _walk_g2x_root(root_path):
     for root, dirs, files in os.walk(root_path):
+        if root.endswith(".appiconset"):
+            print("ignore appiconset dir")
+            continue
         for name in files:
             if not ('png' in name or 'jpg' in name or 'jpeg' in name):
                 continue
@@ -102,6 +105,7 @@ def _walk_g2x_root(root_path):
                 imageset_dir = os.path.split(root)[-1]
                 imageset_name = imageset_dir.split('.')[0]
             path = os.path.join(root, name)
+            print("Current Path %s" % path)
             if imageset_dir and imageset_name:
                 json_path = os.path.join(root, 'Contents.json')
                 contents = ContentsJson(json_path)
@@ -136,13 +140,13 @@ def g2x(path):
 @xmt.command()
 @click.argument('path', type=click.Path(exists=True, file_okay=True, dir_okay=False, writable=True))
 def mkappicon(path):
-    contentsPath = os.path.join(os.path.dirname(__file__), "AppIconContents.json")
-    contents = _json_from_path(contentsPath)
+    contents_path = os.path.join(os.path.dirname(__file__), "AppIconContents.json")
+    contents = _json_from_path(contents_path)
 
-    def make_pixel_size(point_size, scale):
+    def make_pixel_size(point_size,  scale):
         w, h = point_size.split('x')
-        scale_value = int(scale[0])
-        return "%dx%d" % (int(w) * scale_value, int(h) * scale_value)
+        scale_value = float(scale[0])
+        return "%dx%d" % (float(w) * scale_value, float(h) * scale_value)
 
     folder = "AppIcon.appiconset"
     if not os.path.exists(folder):
