@@ -169,6 +169,30 @@ def mkappicon(path):
     _json_to_path(contents, contents_json_path)
 
 
+def _ogg2caf(filepath):
+    name, suffix = filepath.rsplit('.', 1)
+    caf_output = "%s.caf" % name
+    if os.path.isfile(caf_output):
+        return
+    wav_output = "%s.wav" % name
+    if not os.path.isfile(wav_output):
+        to_wav = "ffmpeg -i %s %s" % (filepath, wav_output)
+        subprocess.check_call(to_wav, shell=True)
+    to_caf = "afconvert -f caff -d LEI16 %s %s" % (wav_output, caf_output)
+    subprocess.check_call(to_caf, shell=True)
+
+
+@xmt.command()
+@click.argument('path', type=click.Path(exists=True, file_okay=True, dir_okay=True))
+def ogg2caf(path):
+    if os.path.isfile(path):
+        _ogg2caf(path)
+    elif os.path.isdir(path):
+        for filepath in os.listdir(path):
+            if filepath.endswith(".ogg") and os.path.isfile(filepath):
+                _ogg2caf(filepath)
+
+
 def main():
     xmt()
 
