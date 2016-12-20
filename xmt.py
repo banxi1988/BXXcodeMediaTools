@@ -193,6 +193,17 @@ def ogg2caf(path):
                 _ogg2caf(filepath)
 
 
+@xmt.command()
+@click.argument('path', type=click.Path(exists=True, file_okay=True, dir_okay=True))
+def add3x(path):
+    if os.path.isdir(path):
+        for filepath in os.listdir(path):
+            if filepath.endswith(".png") or filepath.endswith(".jpg"):
+                name, ext = filepath.rsplit(".", 1)
+                newname = "%s@3x.%s" % (name, ext)
+                os.rename(filepath, newname)
+
+
 def main():
     xmt()
 
